@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Student Submissions – {{ test.name }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>📊 Student Submissions</h1>
+    <p>{{ test.name }} &nbsp;·&nbsp; {{ test.classroom.name }}</p>
+    <div class="actions">
+      <a href="{% url 'view_classroom' test.classroom.pk %}" class="btn btn-secondary">← Classroom</a>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="num">{{ submissions.count }}</div>
+      <div class="lbl">Submissions</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ test.questions.count }}</div>
+      <div class="lbl">Questions</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ test.total_marks }}</div>
+      <div class="lbl">Total Marks</div>
+    </div>
+  </div>
+
+  {% if submissions %}
+    {% for submission in submissions %}
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;">
+              {{ submission.student.first_name.0|default:submission.student.username.0|upper }}
+            </div>
+            <div>
+              <div style="font-weight:700;">{{ submission.student.get_full_name|default:submission.student.username }}</div>
+              <div style="font-size:0.78rem;color:var(--muted);">Submitted {{ submission.submitted_at|date:"d M Y, H:i" }}</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.25rem;font-weight:800;color:var(--accent);">
+              {{ submission.final_score|floatformat:1 }} / {{ test.total_marks }}
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
+              <span class="badge {% if submission.grade == 'A+' or submission.grade == 'A' %}badge-green{% elif submission.grade == 'B' or submission.grade == 'C' %}badge-blue{% elif submission.grade == 'D' %}badge-yellow{% else %}badge-red{% endif %}">{{ submission.grade }}</span>
+              <span class="badge badge-blue">{{ submission.percentage }}%</span>
+              {% if submission.is_reviewed %}
+                <span class="badge badge-green">✓ Reviewed</span>
+              {% else %}
+                <span class="badge badge-yellow">⏳ Pending</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Per-answer review -->
+        {% for answer in submission.answers.all %}
+          <div style="border:1px solid var(--border);border-radius:10px;margin-bottom:0.75rem;overflow:hidden;">
+            <div style="background:var(--surface2);padding:0.6rem 1rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+              <div style="font-size:0.85rem;font-weight:600;">Q{{ forloop.counter }}. {{ answer.question.text|truncatechars:70 }}</div>
+              <span class="badge badge-blue">Max: {{ answer.question.max_score }}</span>
+            </div>
+            <div style="padding:0.75rem 1rem;">
+              <div style="font-size:0.8rem;color:var(--muted);margin-bottom:4px;">Student Answer:</div>
+              <div style="font-size:0.875rem;background:var(--surface2);padding:0.75rem;border-radius:8px;margin-bottom:0.75rem;">
+                {{ answer.answer_text|default:"(No answer)" }}
+              </div>
+              <form method="post" action="{% url 'update_score' answer.pk %}" style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+                {% csrf_token %}
+                <div style="font-size:0.8rem;color:var(--muted);">🤖 ML: <strong>{{ answer.ml_score|floatformat:1 }}</strong></div>
+                <label style="font-size:0.8rem;color:var(--muted);text-transform:none;letter-spacing:0;">Teacher Score:</label>
+                <input type="number"
+                  name="score"
+                  value="{{ answer.teacher_score|default:answer.ml_score|floatformat:1 }}"
+                  min="0" max="{{ answer.question.max_score }}" step="0.5"
+                  style="width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.875rem;" />
+                <span style="font-size:0.8rem;color:var(--muted);">/ {{ answer.question.max_score }}</span>
+                <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                <a href="{% url 'review_answer' answer.pk %}" class="btn btn-secondary btn-sm">Full Review</a>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="card" style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">📭</div>
+      <h3 style="font-weight:700;margin-bottom:0.5rem;">No submissions yet</h3>
+      <p style="color:var(--muted);">Students haven't taken this test yet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

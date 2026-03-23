@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Review Answer – EasyExam{% endblock %}
+{% block content %}
+<div class="page" style="max-width:800px;">
+  <div class="page-header">
+    <h1>🔍 Full Answer Review</h1>
+    <p>{{ answer.question.test.name }} &nbsp;·&nbsp; {{ answer.submission.student.get_full_name|default:answer.submission.student.username }}</p>
+    <div class="actions">
+      <a href="{% url 'students_work' answer.question.test.pk %}" class="btn btn-secondary">← Back</a>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Question ({{ answer.question.max_score }} marks)</div>
+    <div style="font-size:1rem;font-weight:600;">{{ answer.question.text }}</div>
+  </div>
+
+  <!-- NLP Scores -->
+  <div class="card" style="margin-bottom:1.25rem;">
+    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1rem;">🤖 NLP Analysis</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1rem;">
+      <div style="text-align:center;background:var(--surface2);padding:1rem;border-radius:10px;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--accent);">{{ result.score|floatformat:1 }}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">ML Score</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);padding:1rem;border-radius:10px;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--accent);">{{ result.percentage }}%</div>
+        <div style="font-size:0.75rem;color:var(--muted);">Percentage</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);padding:1rem;border-radius:10px;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--green);">{{ result.similarity|floatformat:2 }}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">Cosine Similarity</div>
+      </div>
+      <div style="text-align:center;background:var(--surface2);padding:1rem;border-radius:10px;">
+        <div style="font-size:1.5rem;font-weight:800;color:var(--yellow);">{{ result.keyword_coverage|floatformat:2 }}</div>
+        <div style="font-size:0.75rem;color:var(--muted);">Keyword Coverage</div>
+      </div>
+    </div>
+    <div class="feedback-box">{{ result.feedback }}</div>
+
+    {% if result.matched_keywords or result.missed_keywords %}
+      <div style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;">
+        {% if result.matched_keywords %}
+          <div>
+            <div style="font-size:0.72rem;color:var(--green);font-weight:700;margin-bottom:6px;">✔ COVERED KEYWORDS</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              {% for kw in result.matched_keywords %}
+                <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);padding:3px 10px;border-radius:20px;font-size:0.78rem;">{{ kw }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+        {% if result.missed_keywords %}
+          <div>
+            <div style="font-size:0.72rem;color:var(--red);font-weight:700;margin-bottom:6px;">✘ MISSED KEYWORDS</div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+              {% for kw in result.missed_keywords %}
+                <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:3px 10px;border-radius:20px;font-size:0.78rem;">{{ kw }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Side by side comparison -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem;">
+    <div class="card">
+      <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Student Answer</div>
+      <div style="font-size:0.875rem;line-height:1.7;">{{ answer.answer_text|default:"(No answer)" }}</div>
+    </div>
+    <div class="card">
+      <div style="font-size:0.75rem;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Reference Answer</div>
+      <div style="font-size:0.875rem;line-height:1.7;color:var(--muted);">{{ answer.question.reference_answer }}</div>
+    </div>
+  </div>
+
+  <!-- Override score -->
+  <div class="card">
+    <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:1rem;">Override Score</div>
+    <form method="post" action="{% url 'update_score' answer.pk %}" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      {% csrf_token %}
+      <div style="font-size:0.9rem;">ML suggested: <strong style="color:var(--accent);">{{ result.score|floatformat:1 }}</strong> / {{ answer.question.max_score }}</div>
+      <input type="number" name="score"
+        value="{{ answer.teacher_score|default:result.score|floatformat:1 }}"
+        min="0" max="{{ answer.question.max_score }}" step="0.5"
+        style="width:100px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Sora',sans-serif;font-size:0.9rem;" />
+      <span style="color:var(--muted);">/ {{ answer.question.max_score }}</span>
+      <button type="submit" class="btn btn-primary">Save Score</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

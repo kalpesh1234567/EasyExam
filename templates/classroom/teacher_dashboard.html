@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Teacher Dashboard – EasyExam{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>👋 Hello, {{ user.get_full_name|default:user.username }}</h1>
+    <p>Manage your classrooms and monitor student performance</p>
+    <div class="actions">
+      <a href="{% url 'create_classroom' %}" class="btn btn-primary">+ New Classroom</a>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="num">{{ classrooms.count }}</div>
+      <div class="lbl">Classrooms</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ total_students }}</div>
+      <div class="lbl">Total Students</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ total_tests }}</div>
+      <div class="lbl">Tests Created</div>
+    </div>
+  </div>
+
+  {% if classrooms %}
+    <h2 style="font-size:1rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">Your Classrooms</h2>
+    <div class="card-grid">
+      {% for cls in classrooms %}
+        <a href="{% url 'view_classroom' cls.pk %}" class="class-card">
+          <h3>{{ cls.name }}</h3>
+          {% if cls.description %}
+            <p class="meta" style="margin-top:4px;">{{ cls.description|truncatechars:60 }}</p>
+          {% endif %}
+          <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap;">
+            <span class="code-badge">{{ cls.code }}</span>
+            <span class="badge badge-blue">{{ cls.enrollments.count }} students</span>
+            <span class="badge badge-green">{{ cls.tests.count }} tests</span>
+          </div>
+          <p class="meta" style="margin-top:8px;">Created {{ cls.created_at|date:"d M Y" }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">🏫</div>
+      <h3 style="font-weight:700;margin-bottom:0.5rem;">No classrooms yet</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;">Create your first classroom and start evaluating answers!</p>
+      <a href="{% url 'create_classroom' %}" class="btn btn-primary">+ Create Classroom</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Create Test – EasyExam{% endblock %}
+{% block content %}
+<div class="page-sm">
+  <div class="page-header">
+    <h1>📋 Create Test</h1>
+    <p>For classroom: <strong>{{ classroom.name }}</strong></p>
+  </div>
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Test Name</label>
+        {{ form.name }}
+      </div>
+      <div class="form-group">
+        <label>Description <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+        {{ form.description }}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div class="form-group">
+          <label>Start Time</label>
+          {{ form.start_time }}
+        </div>
+        <div class="form-group">
+          <label>End Time</label>
+          {{ form.end_time }}
+        </div>
+      </div>
+      {% for err in form.non_field_errors %}<div class="alert alert-error">{{ err }}</div>{% endfor %}
+      <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+        <button type="submit" class="btn btn-primary">Create & Add Questions →</button>
+        <a href="{% url 'view_classroom' classroom.pk %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

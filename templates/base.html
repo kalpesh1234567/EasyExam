@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}EasyExam – ASAE{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0d14;
+      --surface: #111827;
+      --surface2: #1a2234;
+      --border: #1f2d42;
+      --accent: #3b82f6;
+      --accent2: #6366f1;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --radius: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: rgba(17,24,39,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-brand {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--accent);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nav-brand span { color: var(--text); }
+    .nav-links { display: flex; align-items: center; gap: 0.5rem; }
+    .nav-links a, .nav-links button {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links button:hover { color: var(--text); background: var(--surface2); }
+    .nav-badge {
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── Layout ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .page-sm { max-width: 520px; margin: 0 auto; padding: 3rem 1.5rem; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+    .class-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .class-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .class-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(59,130,246,0.15); }
+    .class-card h3 { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .class-card .meta { color: var(--muted); font-size: 0.8rem; }
+    .code-badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--accent);
+      margin-top: 8px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: 'Sora', sans-serif;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #2563eb; transform: translateY(-1px); }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-success { background: var(--green); color: #fff; }
+    .btn-success:hover { background: #059669; }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-block { width: 100%; justify-content: center; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 1.25rem; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'Sora', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+    textarea.form-input { resize: vertical; }
+    .form-check { display: flex; align-items: center; gap: 8px; }
+    .form-check input { width: 16px; height: 16px; accent-color: var(--accent); }
+
+    /* ── Stats row ── */
+    .stats-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .stat-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.5rem;
+      flex: 1;
+      min-width: 140px;
+    }
+    .stat-box .num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-box .lbl { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* ── Tables ── */
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th { text-align: left; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .tbl td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl tr:hover td { background: var(--surface2); }
+
+    /* ── Badges ── */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .badge-green { background: rgba(16,185,129,0.15); color: var(--green); }
+    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ── Progress bar ── */
+    .progress-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin: 6px 0; }
+    .progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.6s ease; }
+
+    /* ── Alerts ── */
+    .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 1rem; font-size: 0.875rem; }
+    .alert-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
+    .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+    .alert-info { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); color: var(--accent); }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 2rem; }
+    .page-header h1 { font-size: 1.8rem; font-weight: 800; }
+    .page-header p { color: var(--muted); margin-top: 4px; }
+    .page-header .actions { margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    /* ── Divider ── */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+
+    /* ── Score ring ── */
+    .score-display {
+      text-align: center;
+      padding: 2rem;
+    }
+    .score-ring {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      border: 4px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      margin: 0 auto 1rem;
+      background: var(--surface2);
+    }
+    .score-ring .big { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .score-ring .sm { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── Question answer box ── */
+    .qa-box { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 1.25rem; }
+    .qa-box .qa-header { background: var(--surface2); padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; }
+    .qa-box .qa-body { padding: 1rem; }
+
+    /* ── Feedback box ── */
+    .feedback-box { background: var(--surface2); border-radius: 8px; padding: 1rem; font-size: 0.875rem; white-space: pre-line; border-left: 3px solid var(--accent); margin-top: 0.75rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .page { padding: 1rem; }
+      .stats-row { flex-direction: column; }
+      nav { padding: 0 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-brand" href="{% url 'home' %}">
+    📝 <span>EasyExam</span>
+  </a>
+  <div class="nav-links">
+    {% if user.is_authenticated %}
+      <span class="nav-badge">{{ user.get_full_name|default:user.username }}</span>
+      <a href="{% url 'dashboard' %}">Dashboard</a>
+      {% if user.userprofile.is_teacher %}
+        <a href="{% url 'create_classroom' %}">+ Classroom</a>
+      {% else %}
+        <a href="{% url 'join_classroom' %}">Join</a>
+      {% endif %}
+      <form method="post" action="{% url 'logout' %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+      </form>
+    {% else %}
+      <a href="{% url 'student_login' %}">Student Portal</a>
+      <a href="{% url 'teacher_login' %}" style="color:var(--accent)">Teacher Portal</a>
+    {% endif %}
+  </div>
+</nav>
+
+<div>
+  {% if messages %}
+    <div style="max-width:1100px;margin:1rem auto;padding:0 1.5rem;">
+      {% for msg in messages %}
+        <div class="alert {% if msg.tags == 'error' %}alert-error{% elif msg.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">
+          {{ msg }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>

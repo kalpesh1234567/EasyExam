@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Join Classroom – EasyExam{% endblock %}
+{% block content %}
+<div class="page-sm">
+  <div class="page-header">
+    <h1>🔑 Join Classroom</h1>
+    <p>Enter the 6-character code your teacher gave you</p>
+  </div>
+  <div class="card">
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Classroom Code</label>
+        {{ form.code }}
+        {% if form.code.errors %}<p style="color:var(--red);font-size:0.8rem;margin-top:4px;">{{ form.code.errors.0 }}</p>{% endif %}
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:0.5rem;">
+        <button type="submit" class="btn btn-primary">Join</button>
+        <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

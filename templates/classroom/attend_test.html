@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}{{ test.name }} – EasyExam{% endblock %}
+{% block content %}
+<style>
+  .test-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .timer {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--surface2);
+    padding: 6px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .timer.warn { color: var(--yellow); }
+  .timer.danger { color: var(--red); }
+  .q-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .q-card .q-header {
+    background: var(--surface2);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .q-card .q-body { padding: 1.25rem; }
+  .q-text { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+  textarea.answer-area {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 140px;
+    transition: border-color 0.2s;
+  }
+  textarea.answer-area:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  .word-count { font-size: 0.75rem; color: var(--muted); margin-top: 4px; text-align: right; }
+</style>
+
+<div class="test-header">
+  <div>
+    <h2 style="font-weight:800;font-size:1.1rem;">{{ test.name }}</h2>
+    <span style="color:var(--muted);font-size:0.875rem;">{{ test.classroom.name }} &nbsp;·&nbsp; {{ questions|length }} questions &nbsp;·&nbsp; {{ test.total_marks }} marks</span>
+  </div>
+  <div class="timer" id="timer">--:--</div>
+</div>
+
+<div class="page">
+  <form method="post" action="{% url 'submit_test' test.pk %}" id="test-form">
+    {% csrf_token %}
+    {% for question in questions %}
+      <div class="q-card">
+        <div class="q-header">
+          <span style="font-weight:700;font-size:0.875rem;">Question {{ forloop.counter }}</span>
+          <span class="badge badge-blue">{{ question.max_score }} marks</span>
+        </div>
+        <div class="q-body">
+          <div class="q-text">{{ question.text }}</div>
+          <textarea
+            name="answer_{{ question.pk }}"
+            class="answer-area"
+            placeholder="Write your answer here..."
+            id="ans_{{ question.pk }}"
+            oninput="updateCount(this)"
+          ></textarea>
+          <div class="word-count" id="wc_{{ question.pk }}">0 words</div>
+        </div>
+      </div>
+    {% endfor %}
+
+    <div style="text-align:center;padding:1rem 0 2rem;">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;max-width:480px;margin:0 auto 1.5rem;">
+        <div style="font-size:1.5rem;margin-bottom:0.5rem;">⚠️</div>
+        <p style="font-weight:600;margin-bottom:4px;">Review before submitting</p>
+        <p style="color:var(--muted);font-size:0.875rem;">Once submitted, you cannot change your answers. All answers will be evaluated by the NLP engine instantly.</p>
+      </div>
+      <button type="submit" class="btn btn-success" style="font-size:1rem;padding:12px 36px;" onclick="return confirm('Submit the test now? You cannot go back.')">
+        ✓ Submit Test
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  function updateCount(ta) {
+    const words = ta.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+    const id = ta.id.replace('ans_', 'wc_');
+    document.getElementById(id).textContent = words + ' word' + (words !== 1 ? 's' : '');
+  }
+
+  // Countdown timer
+  const endTime = new Date("{{ test.end_time|date:'Y-m-d' }}T{{ test.end_time|time:'H:i:s' }}").getTime();
+  const timerEl = document.getElementById('timer');
+
+  function tick() {
+    const now = Date.now();
+    const diff = endTime - now;
+    if (diff <= 0) {
+      timerEl.textContent = "TIME'S UP";
+      timerEl.className = 'timer danger';
+      document.getElementById('test-form').submit();
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    timerEl.textContent = (h ? h + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    if (diff < 300000) timerEl.className = 'timer warn';
+    if (diff < 60000) timerEl.className = 'timer danger';
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // Auto-save to localStorage
+  document.querySelectorAll('textarea.answer-area').forEach(ta => {
+    const key = 'asae_{{ test.pk }}_' + ta.name;
+    ta.value = localStorage.getItem(key) || '';
+    updateCount(ta);
+    ta.addEventListener('input', () => localStorage.setItem(key, ta.value));
+  });
+</script>
+{% endblock %}

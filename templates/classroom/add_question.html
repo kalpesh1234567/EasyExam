@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Add Question – EasyExam{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>➕ Add Questions</h1>
+    <p>Test: <strong>{{ test.name }}</strong> &nbsp;|&nbsp; {{ test.questions.count }} question{{ test.questions.count|pluralize }} added</p>
+    <div class="actions">
+      <a href="{% url 'view_classroom' test.classroom.pk %}" class="btn btn-secondary">✓ Done Adding</a>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start;">
+    <div class="card">
+      <h2 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;">New Question</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Question Text</label>
+          {{ form.text }}
+        </div>
+        <div class="form-group">
+          <label>Reference / Model Answer</label>
+          <p style="font-size:0.78rem;color:var(--muted);margin-bottom:6px;">This is used by the NLP engine to evaluate student answers. Be thorough and include all key points.</p>
+          {{ form.reference_answer }}
+        </div>
+        <div class="form-group" style="max-width:180px;">
+          <label>Max Score</label>
+          {{ form.max_score }}
+        </div>
+        <div style="display:flex;gap:0.75rem;">
+          <button type="submit" name="add_another" class="btn btn-secondary">+ Add Another</button>
+          <button type="submit" class="btn btn-primary">Save & Finish</button>
+        </div>
+      </form>
+    </div>
+
+    <div>
+      <h2 style="font-size:1rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">Questions Added</h2>
+      {% if questions %}
+        {% for q in questions %}
+          <div class="card" style="margin-bottom:0.75rem;padding:1rem;">
+            <div style="font-size:0.75rem;color:var(--muted);margin-bottom:4px;">Q{{ forloop.counter }} &nbsp;·&nbsp; {{ q.max_score }} marks</div>
+            <div style="font-size:0.875rem;font-weight:600;">{{ q.text|truncatechars:80 }}</div>
+          </div>
+        {% endfor %}
+        <div style="margin-top:1rem;padding:0.75rem 1rem;background:var(--surface2);border-radius:8px;border:1px solid var(--border);font-size:0.875rem;">
+          <strong>Total marks:</strong> {{ test.total_marks }}
+        </div>
+      {% else %}
+        <div class="card" style="text-align:center;padding:1.5rem;">
+          <p style="color:var(--muted);font-size:0.875rem;">No questions yet</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

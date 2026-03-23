@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Results – {{ test.name }}{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>📊 Test Results</h1>
+    <p>{{ test.name }} &nbsp;·&nbsp; {{ test.classroom.name }}</p>
+    <div class="actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-secondary">← Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Score summary card -->
+  <div class="card" style="margin-bottom:2rem;background:linear-gradient(135deg,var(--surface),var(--surface2));">
+    <div style="display:flex;align-items:center;gap:2rem;flex-wrap:wrap;">
+      <div class="score-ring" style="border-color:
+        {% if submission.percentage >= 75 %}var(--green)
+        {% elif submission.percentage >= 50 %}var(--accent)
+        {% elif submission.percentage >= 35 %}var(--yellow)
+        {% else %}var(--red){% endif %};">
+        <div class="big">{{ submission.grade }}</div>
+        <div class="sm">{{ submission.percentage }}%</div>
+      </div>
+      <div style="flex:1;">
+        <h2 style="font-size:1.5rem;font-weight:800;">{{ submission.final_score|floatformat:1 }} / {{ test.total_marks }}</h2>
+        <div class="progress-bar" style="margin:8px 0;height:10px;">
+          <div class="progress-fill" style="width:{{ submission.percentage }}%;"></div>
+        </div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.5rem;">
+          <span style="font-size:0.875rem;color:var(--muted);">🤖 ML Score: <strong>{{ submission.ml_total|floatformat:1 }}</strong></span>
+          {% if submission.teacher_total is not None %}
+            <span style="font-size:0.875rem;color:var(--green);">✅ Teacher Reviewed: <strong>{{ submission.teacher_total|floatformat:1 }}</strong></span>
+          {% else %}
+            <span style="font-size:0.875rem;color:var(--muted);">⏳ Pending teacher review</span>
+          {% endif %}
+          <span style="font-size:0.875rem;color:var(--muted);">Submitted: {{ submission.submitted_at|date:"d M Y, H:i" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed answers -->
+  <h2 style="font-size:1rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">Answer-wise Breakdown</h2>
+
+  {% for item in detailed %}
+    <div class="qa-box" style="margin-bottom:1.5rem;">
+      <div class="qa-header">
+        <span>Q{{ forloop.counter }}. {{ item.answer.question.text|truncatechars:80 }}</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <div style="text-align:right;">
+            <div style="font-size:1.1rem;font-weight:800;
+              color:{% if item.result.percentage >= 75 %}var(--green){% elif item.result.percentage >= 50 %}var(--accent){% elif item.result.percentage >= 35 %}var(--yellow){% else %}var(--red){% endif %};">
+              {{ item.answer.final_score|floatformat:1 }} / {{ item.answer.question.max_score }}
+            </div>
+            <div style="font-size:0.7rem;color:var(--muted);">{{ item.result.percentage }}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="qa-body">
+
+        <!-- Metrics bar -->
+        <div style="display:flex;gap:1.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+          <div>
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Semantic Match</div>
+            <div class="progress-bar" style="width:140px;"><div class="progress-fill" style="width:{{ item.answer.similarity_score|floatformat:2|cut:'.0'  }}%;background:linear-gradient(90deg,var(--accent),var(--accent2));"></div></div>
+            <div style="font-size:0.78rem;color:var(--muted);">{{ item.result.similarity|floatformat:2 }}</div>
+          </div>
+          <div>
+            <div style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px;">Keyword Coverage</div>
+            <div class="progress-bar" style="width:140px;"><div class="progress-fill" style="width:{% widthratio item.result.keyword_coverage 1 100 %}%;background:linear-gradient(90deg,var(--green),#34d399);"></div></div>
+            <div style="font-size:0.78rem;color:var(--muted);">{{ item.result.keyword_coverage|floatformat:2 }}</div>
+          </div>
+        </div>
+
+        <!-- Student answer -->
+        <div style="margin-bottom:1rem;">
+          <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Your Answer</div>
+          <div style="background:var(--surface2);border-radius:8px;padding:1rem;font-size:0.875rem;line-height:1.7;border:1px solid var(--border);">
+            {{ item.answer.answer_text|default:"(No answer provided)" }}
+          </div>
+        </div>
+
+        <!-- Feedback -->
+        <div>
+          <div style="font-size:0.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">🤖 AI Feedback</div>
+          <div class="feedback-box">{{ item.result.feedback }}</div>
+        </div>
+
+        <!-- Keywords -->
+        {% if item.result.matched_keywords or item.result.missed_keywords %}
+          <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap;">
+            {% if item.result.matched_keywords %}
+              <div>
+                <div style="font-size:0.72rem;color:var(--green);font-weight:700;margin-bottom:4px;">✔ COVERED</div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  {% for kw in item.result.matched_keywords %}
+                    <span style="background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);color:var(--green);padding:2px 8px;border-radius:20px;font-size:0.75rem;">{{ kw }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+            {% if item.result.missed_keywords %}
+              <div>
+                <div style="font-size:0.72rem;color:var(--red);font-weight:700;margin-bottom:4px;">✘ MISSED</div>
+                <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                  {% for kw in item.result.missed_keywords %}
+                    <span style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);padding:2px 8px;border-radius:20px;font-size:0.75rem;">{{ kw }}</span>
+                  {% endfor %}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

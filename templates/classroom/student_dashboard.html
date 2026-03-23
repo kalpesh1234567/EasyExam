@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard – EasyExam{% endblock %}
+{% block content %}
+<div class="page">
+  <div class="page-header">
+    <h1>👋 Hello, {{ user.get_full_name|default:user.username }}</h1>
+    <p>View your classrooms, take tests and check your scores</p>
+    <div class="actions">
+      <a href="{% url 'join_classroom' %}" class="btn btn-primary">+ Join Classroom</a>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="num">{{ classrooms|length }}</div>
+      <div class="lbl">Classrooms</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">{{ submissions|length }}</div>
+      <div class="lbl">Tests Taken</div>
+    </div>
+    <div class="stat-box">
+      <div class="num">
+        {% if submissions %}
+          {% with total=0 %}
+            {% for s in submissions %}{{ s.percentage }}{% endfor %}
+          {% endwith %}
+          {{ submissions.0.percentage }}%
+        {% else %}—{% endif %}
+      </div>
+      <div class="lbl">Latest Score</div>
+    </div>
+  </div>
+
+  {% if classrooms %}
+    <h2 style="font-size:1rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">My Classrooms</h2>
+    <div class="card-grid">
+      {% for cls in classrooms %}
+        <a href="{% url 'view_classroom' cls.pk %}" class="class-card">
+          <h3>{{ cls.name }}</h3>
+          {% if cls.description %}<p class="meta" style="margin-top:4px;">{{ cls.description|truncatechars:60 }}</p>{% endif %}
+          <div style="margin-top:10px;">
+            <span class="badge badge-blue">{{ cls.tests.count }} test{{ cls.tests.count|pluralize }}</span>
+          </div>
+          <p class="meta" style="margin-top:8px;">By {{ cls.owner.get_full_name|default:cls.owner.username }}</p>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align:center;padding:3rem;">
+      <div style="font-size:3rem;margin-bottom:1rem;">📚</div>
+      <h3 style="font-weight:700;margin-bottom:0.5rem;">Not enrolled in any classroom</h3>
+      <p style="color:var(--muted);margin-bottom:1.5rem;">Ask your teacher for the 6-character classroom code.</p>
+      <a href="{% url 'join_classroom' %}" class="btn btn-primary">+ Join Classroom</a>
+    </div>
+  {% endif %}
+
+  {% if submissions %}
+    <hr class="divider" style="margin-top:2.5rem;" />
+    <h2 style="font-size:1rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;">Recent Test Results</h2>
+    <div class="card">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Classroom</th>
+            <th>Score</th>
+            <th>Grade</th>
+            <th>Submitted</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in submissions %}
+            <tr>
+              <td style="font-weight:600;">{{ sub.test.name }}</td>
+              <td>{{ sub.test.classroom.name }}</td>
+              <td>
+                {{ sub.final_score|floatformat:1 }} / {{ sub.test.total_marks }}
+                <div class="progress-bar" style="width:120px;">
+                  <div class="progress-fill" style="width:{{ sub.percentage }}%;"></div>
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if sub.grade == 'A+' or sub.grade == 'A' %}badge-green{% elif sub.grade == 'B' or sub.grade == 'C' %}badge-blue{% elif sub.grade == 'D' %}badge-yellow{% else %}badge-red{% endif %}">
+                  {{ sub.grade }}
+                </span>
+              </td>
+              <td style="color:var(--muted);">{{ sub.submitted_at|date:"d M, H:i" }}</td>
+              <td><a href="{% url 'test_result' sub.test.pk %}" class="btn btn-secondary btn-sm">View</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
